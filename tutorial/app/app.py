@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Depends, Form
+from requests import session
 from streamlit import title
 from app.schemas import PostCreate
 from app.db import Post, create_db_and_tables, get_async_session
@@ -10,6 +11,7 @@ from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
 import tempfile
 import shutil
 import os
+
 
 
 
@@ -73,3 +75,22 @@ async def get_feed(session: AsyncSession = Depends(get_async_session)):
         })
         # posts_data.append(post_data)
     return {"posts": posts_data}
+
+
+@app.delete("/posts/{post_id}")
+async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_session)):
+    
+    try:
+        post_uuid = uuid.UUID(post_id)
+        result = await session.execute(select(Post).where(Post.id == post_uuid))
+        post  = results.scalars().first()
+
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+        
+        await session.delete(post)
+        await session.commit()
+
+        return {"detail": "Post deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
