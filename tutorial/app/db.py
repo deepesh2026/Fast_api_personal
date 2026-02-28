@@ -24,7 +24,9 @@ class Post(Base):
     __tablename__ = "posts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+
     caption = Column(Text)
     url = Column(String, nullable=False)
     file_type = Column(String, nullable=False)
@@ -32,7 +34,6 @@ class Post(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="posts")
-
 
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
